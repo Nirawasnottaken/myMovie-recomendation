@@ -1,0 +1,148 @@
+{
+  "info": {
+    "_postman_id": "b1372195-cinematch-postman-collection",
+    "name": "Movie Recommendation System API Test Suite (Day 2)",
+    "description": "Postman API test collection for verifying Express backend endpoints: Auth, Movies, Search, Recommendations, Ratings, and S3 Upload.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "2. User Registration",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/auth/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "auth", "register"]
+        }
+      }
+    },
+    {
+      "name": "3. User Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"demo@cinematch.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "4. Get All Movies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/movies",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "movies"]
+        }
+      }
+    },
+    {
+      "name": "5. Search Movies (Filter by Query)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/movies?q=Interstellar",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "movies"],
+          "query": [{ "key": "q", "value": "Interstellar" }]
+        }
+      }
+    },
+    {
+      "name": "6. Get Movie Recommendations (Cosine Similarity)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/recommendations?movieId=m1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "recommendations"],
+          "query": [{ "key": "movieId", "value": "m1" }]
+        }
+      }
+    },
+    {
+      "name": "7. Submit Movie Rating",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"u1\",\n  \"movieId\": \"m1\",\n  \"rating\": 5\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ratings",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "ratings"]
+        }
+      }
+    },
+    {
+      "name": "8. Generate AWS S3 Poster Presigned URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filename\": \"oppenheimer_poster.jpg\",\n  \"fileType\": \"image/jpeg\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/upload/poster",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "upload", "poster"]
+        }
+      }
+    }
+  ]
+}

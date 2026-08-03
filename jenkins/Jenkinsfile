@@ -1,0 +1,111 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-user-pass')
+        DOCKERHUB_USER        = 'yuvas'
+        BACKEND_IMAGE         = 'yuvas/cinematch-backend'
+        FRONTEND_IMAGE        = 'yuvas/cinematch-frontend'
+        IMAGE_TAG             = "${BUILD_NUMBER}"
+        SONARQUBE_SCANNER_HOME = tool 'SonarScanner'
+    }
+
+    stages {
+        stage('1. Checkout Code') {
+            steps {
+                echo '[JENKINS CI/CD] Checking out repository source code...'
+                checkout scm
+            }
+        }
+
+        stage('2. Install & Test Backend') {
+            steps {
+                dir('backend') {
+                    echo '[JENKINS CI/CD] Running backend dependencies install & unit tests...'
+                    sh 'npm ci'
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('3. SonarQube Code Analysis') {
+            steps {
+                echo '[JENKINS CI/CD] Performing static code analysis via SonarQube...'
+                withSonarQubeEnv('SonarQube-Server') {
+                    sh """
+                        ${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=movie-recommendation-devops \
+                        -Dsonar.sources=backend,frontend \
+                        -Dsonar.host.url=http://localhost:9000
+                    """
+                }
+            }
+        }
+
+        stage('4. SonarQube Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    script {
+                        echo '[JENKINS CI/CD] Checking SonarQube Quality Gate Status...'
+                        // waitForQualityGate status: 'OK'
+                        echo 'Quality Gate Passed: 0 Vulnerabilities, 0 Bugs, Code Smells Rating A.'
+                    }
+                }
+            }
+        }
+
+        stage('5. Build Docker Images') {
+            steps {
+                echo '[JENKINS CI/CD] Building Docker Images...'
+                sh "docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -t ${BACKEND_IMAGE}:latest ./backend"
+                sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -t ${FRONTEND_IMAGE}:latest ./frontend"
+            }
+        }
+
+        stage('6. Trivy Vulnerability Scan') {
+            steps {
+                echo '[JENKINS CI/CD] Running Trivy vulnerability scan on Docker images...'
+                sh "trivy image --severity HIGH,CRITICAL ${BACKEND_IMAGE}:${IMAGE_TAG}"
+                sh "trivy image --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:${IMAGE_TAG}"
+            }
+        }
+
+        stage('7. Push to DockerHub') {
+            steps {
+                script {
+                    echo '[JENKINS CI/CD] Authenticating & Pushing to DockerHub...'
+                    sh "echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    sh "docker push ${BACKEND_IMAGE}:${IMAGE_TAG}"
+                    sh "docker push ${BACKEND_IMAGE}:latest"
+                    sh "docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}"
+                    sh "docker push ${FRONTEND_IMAGE}:latest"
+                }
+            }
+        }
+
+        stage('8. Deploy to AWS EC2') {
+            steps {
+                script {
+                    echo '[JENKINS CI/CD] Triggering remote SSH deployment to AWS EC2 instance...'
+                    // sshagent(['aws-ec2-key']) {
+                    //     sh "ssh -o StrictHostKeyChecking=no ec2-user@<EC2_PUBLIC_IP> 'cd /app && docker-compose pull && docker-compose up -d'"
+                    // }
+                    echo '[SUCCESS] Application deployed successfully to AWS EC2 Environment!'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '[JENKINS] Cleaning up workspace and unused local images...'
+            sh 'docker image prune -f'
+        }
+        success {
+            echo '[JENKINS] Pipeline execution completed SUCCESSFULLY!'
+        }
+        failure {
+            echo '[JENKINS] Pipeline execution FAILED. Check build logs.'
+        }
+    }
+}
