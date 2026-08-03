@@ -8,6 +8,8 @@ import jwt
 import datetime
 from functools import wraps
 
+import requests
+
 # =====================================================
 # Configuration
 # =====================================================
@@ -27,21 +29,26 @@ JWT_SECRET = os.environ.get(
 
 movies = []
 
-movies_path = os.path.join(
-    os.path.dirname(__file__),
-    "data",
-    "movies.json"
-)
+MOVIES_URL = "https://moviedetails-nira.s3.eu-north-1.amazonaws.com/movies.json"
+
+response = requests.get(MOVIES_URL)
+response.raise_for_status()  # Raises an exception if the request failed
+
+movies = response.json()
+
 
 try:
-    with open(movies_path, "r", encoding="utf-8") as file:
-        movies = json.load(file)
+    response = requests.get(MOVIES_URL)
+    response.raise_for_status()
+
+    movies = response.json()
 
     print(f"[INFO] Loaded {len(movies)} movies into memory.")
 
 except Exception as e:
     print("[ERROR] Failed to load movie dataset")
     print(e)
+    movies = []
 
 # =====================================================
 # In-Memory Database
