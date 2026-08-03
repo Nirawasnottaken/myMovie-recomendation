@@ -772,21 +772,10 @@ def internal_error(e):
 # Start Server
 # =====================================================
 
+
 if __name__ == "__main__":
-
-    print("====================================================")
-    print(f"🎬 CineMatch Backend API running on port {PORT}")
-    print(f"📍 Health: http://localhost:{PORT}/health")
-    print(f"📍 Movies: http://localhost:{PORT}/api/movies")
-    print("====================================================")
-
-    app.run(
-
-        host="0.0.0.0",
-        port=PORT,
-        debug=True
-
-    )
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
 
 
     
